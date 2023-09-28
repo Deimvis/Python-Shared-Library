@@ -28,8 +28,11 @@ class PostgresTable(StorageBase):
     def select(self, where: Dict = None) -> List[Any]:
         return self.api.select(self.table_name, where=where)
 
-    def insert(self, rows: Sequence[Dict]) -> None:
-        self.api.insert(self.table_name, rows)
+    # def insert(self, rows: Sequence[Dict]) -> None:
+        # self.api.insert(self.table_name, rows)
+        # NOTE: Experiment
+    def insert(self, rows: Sequence[Dict], conflict_columns: Sequence[str] = None, conflict_set: Sequence[str] = None, conflict_do_nothing: bool = False) -> None:
+        self.api.insert_v2(self.table_name, rows,  conflict_columns, conflict_set, conflict_do_nothing)
 
     def update(self, set_: Dict, where: Dict) -> None:
         self.api.update(self.table_name, set_=set_, where=where)

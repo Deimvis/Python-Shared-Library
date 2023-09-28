@@ -43,7 +43,7 @@ class PostgresAPI:
     @utils.logging.logging_on_call('Select table `{table_name}`', logging.DEBUG, logger=log_)
     def select(self, table_name: str, where: Dict = None, cursor_kwargs={'cursor_factory': psycopg2.extras.DictCursor}) -> List[Any]:
         with self.connection.cursor(**cursor_kwargs) as cursor:
-            query = 'SELECT * FROM %s'
+            query = 'SELECT * FROM "%s"'
             vars_ = [AsIs(table_name)]
             if where is not None:
                 where_statement, where_vars = self._format_where(where)
@@ -55,7 +55,7 @@ class PostgresAPI:
     @utils.logging.logging_on_call('Exists `{table_name}` where {where}', logging.DEBUG, logger=log_)
     def exists(self, table_name: str, where: Dict) -> bool:
         with self.connection.cursor() as cursor:
-            query = 'SELECT EXISTS (SELECT 1 FROM %s'
+            query = 'SELECT EXISTS (SELECT 1 FROM "%s"'
             vars_ = [AsIs(table_name)]
             where_statement, where_vars = self._format_where(where)
             query = query + ' ' + where_statement + ')'
@@ -75,11 +75,20 @@ class PostgresAPI:
             for columns, values_list in row_groups.items():
                 utils.postgres.insert_many(cursor, table_name, values_list, columns=columns)
 
-    def _insert_many(self, table_name, str, columns: Sequence[str], values_seq: Sequence[Tuple], conflict_columns: Sequence[str] = None, conflict_set: Sequence[str] = None) -> None:
-        # NOTE: NOT TESTED
-        raise NotImplementedError()
-        # extended version of utils.postgres.insert_many
-        # NOTE: maybe it's worth it to replace (columns, values_seq) args with (where)
+    @utils.logging.logging_on_call('Insert (v2) {row_count} rows in `{table_name}`', logging.DEBUG, logger=log_, row_count=lambda **func_args: len(func_args['rows']))
+    def insert_v2(self,  table_name: str, rows: Sequence[Dict], conflict_columns: Sequence[str] = None, conflict_set: Sequence[str] = None, conflict_do_nothing: bool = False):
+        row_groups = defaultdict(list)
+        for row in rows:
+            columns = tuple(sorted(row.keys()))
+            values = tuple(v for _, v in sorted(row.items(), key=lambda item: item[0]))
+            row_groups[columns].append(values)
+
+        with self.connection.cursor() as cursor:
+            for columns, values_list in row_groups.items():
+                self._insert_many(table_name, columns, values_list, conflict_columns, conflict_set, conflict_do_nothing)
+
+    def _insert_many(self, table_name: str, columns: Sequence[str], values_seq: Sequence[Tuple], conflict_columns: Sequence[str] = None, conflict_set: Sequence[str] = None, conflict_do_nothing: bool = False) -> None:
+        # NOTE: NOT TESTED PROPERLY
         if len(values_seq) == 0:
             return
         with self.connection.cursor() as cursor:
@@ -87,11 +96,11 @@ class PostgresAPI:
             values_str = ','.join(cursor.mogrify(values_format, values).decode('utf-8') for values in values_seq)
             query = ''.join([
                 'INSERT INTO ',
-                f'{table_name} ',
+                f'"{table_name}" ',
                 f'({",".join(columns)}) ' if columns is not None else '',
                 'VALUES ',
                 f'{values_str} ',
-                self._format_conflict(conflict_columns, conflict_set or columns) if conflict_columns is not None else ''
+                self._format_conflict(conflict_columns, conflict_set or columns, conflict_do_nothing) if conflict_columns is not None else ''
             ])
             cursor.execute(query)
 
@@ -108,7 +117,7 @@ class PostgresAPI:
     @utils.logging.logging_on_call('Count table `{table_name}`', logging.DEBUG, logger=log_)
     def count(self, table_name: str, where: Dict = None) -> int:
         with self.connection.cursor() as cursor:
-            query = 'SELECT COUNT(*) FROM %s'
+            query = 'SELECT COUNT(*) FROM "%s"'
             vars_ = [AsIs(table_name)]
             if where is not None:
                 where_statement, where_vars = self._format_where(where)
@@ -123,7 +132,7 @@ class PostgresAPI:
         return self.count(table_name)
 
     def delete(self, table_name: str, where: Dict=None) -> None:
-        query = 'DELETE FROM %s'
+        query = 'DELETE FROM "%s"'
         vars_ = [AsIs(table_name)]
         if where is not None:
             where_statement, where_vars = self._format_where(where)
@@ -154,13 +163,12 @@ class PostgresAPI:
         return statement, list(set_.values())
 
     @staticmethod
-    def _format_conflict(conflict_columns: Sequence[str], conflict_set: Sequence[str]) -> Tuple[str, List]:
-        # NOTE: NOT TESTED
+    def _format_conflict(conflict_columns: Sequence[str], conflict_set: Sequence[str] | None, conflict_do_nothing: bool) -> Tuple[str, List]:
+        # NOTE: NOT TESTED PROPERLY
         return ''.join([
             'ON CONFLICT ',
             '(' + ','.join(conflict_columns) + ') ',
-            'DO UPDATE SET ',
-            ','.join('{col} = excluded.{col}' for col in conflict_set)
+            'DO UPDATE SET ' + ','.join(f'{col_name} = excluded.{col_name}' for col_name in conflict_set) if not conflict_do_nothing else 'DO NOTHING',
         ])
 
     @property
