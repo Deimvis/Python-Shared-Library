@@ -19,11 +19,12 @@ class PostgresConsumer(ConsumerBase):
         super().__init__(*args, **kwargs)
 
     def on_start(self):
-        if self._truncate:
-            # TODO: add another param `drop`
-            self.storage.drop()
-        if self.create_table_query is not None:
-            self.storage.create(self.create_table_query)
+        if self.storage.exists():
+            if self._truncate:
+                self.storage.truncate()
+        else:
+            if self.create_table_query is not None:
+                self.storage.create(self.create_table_query)
         super().on_start()
 
     def on_finish(self):

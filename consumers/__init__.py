@@ -1,4 +1,5 @@
 from .base import ConsumerBase  # noqa
+from .dummy import DummyConsumer  # noqa
 from .buffered import BufferedConsumer  # noqa
 from .dishonest import DishonestConsumer  # noqa
 from .file import FileConsumer  # noqa
@@ -38,6 +39,9 @@ class ConsumerGate(ABC):
             'level': logging.getLevelName(level),
             'msg': msg,
         })
+
+    def write_debug(self, msg: str) -> None:
+        self.write_log(logging.DEBUG, msg)
 
     def write_error(self, msg: str) -> None:
         self.write_log(logging.ERROR, msg)
