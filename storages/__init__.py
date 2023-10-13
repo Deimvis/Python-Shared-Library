@@ -1,5 +1,6 @@
 from . import (  # noqa
     base,
+    cache,
     postgres,
 )
 from .base import StorageBase  # noqa
