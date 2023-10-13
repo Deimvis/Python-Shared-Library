@@ -22,11 +22,13 @@ class DefaultRequester(RequesterBase):
                  retries=RETRIES,
                  retries_delay_s=RETRIES_DELAY_S,
                  max_rps=MAX_RPS,
+                 proxies=None,
                  **kwargs):
         self.timeout = timeout
         self.retries = retries
         self.retries_delay_s = retries_delay_s
         self.rps_limiter = max_calls_per_second(max_rps)
+        self.proxies = proxies
         super().__init__(*args, **kwargs)
 
     def request(self, method, url, **kwargs) -> requests.Response:
@@ -38,6 +40,7 @@ class DefaultRequester(RequesterBase):
 
     def _update_request_kwargs(self, **kwargs) -> Dict:
         kwargs['timeout'] = self.timeout
+        kwargs['proxies'] = self.proxies
         return kwargs
 
     @contextmanager
