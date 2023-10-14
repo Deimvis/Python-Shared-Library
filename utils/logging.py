@@ -4,6 +4,10 @@ import logging
 from .inspect import FunctionSignature, inspect_obj_attrs
 
 
+# TODO: support invalid arguments or number of arguments in function call
+# need to skip logging and allow python raise corresponding error
+# now it will fail on step with assigning variables to dict
+
 def logging_on_call(msg, level, logger=None, **format_variables_init):
     @wrapt.decorator  # preserve information about arguments of decorated function
     def decorator(func, instance, args, kwargs):
