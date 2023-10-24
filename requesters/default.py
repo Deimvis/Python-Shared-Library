@@ -22,12 +22,14 @@ class DefaultRequester(RequesterBase):
                  retries=RETRIES,
                  retries_delay_s=RETRIES_DELAY_S,
                  max_rps=MAX_RPS,
+                 headers=None,
                  proxies=None,
                  **kwargs):
         self.timeout = timeout
         self.retries = retries
         self.retries_delay_s = retries_delay_s
         self.rps_limiter = max_calls_per_second(max_rps)
+        self.headers = headers
         self.proxies = proxies
         super().__init__(*args, **kwargs)
 
@@ -39,6 +41,7 @@ class DefaultRequester(RequesterBase):
         return do_request()
 
     def _update_request_kwargs(self, **kwargs) -> Dict:
+        kwargs['headers'] = kwargs.get('headers', {}) | self.headers
         kwargs['timeout'] = self.timeout
         kwargs['proxies'] = self.proxies
         return kwargs
