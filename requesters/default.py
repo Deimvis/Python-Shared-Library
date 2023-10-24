@@ -41,7 +41,8 @@ class DefaultRequester(RequesterBase):
         return do_request()
 
     def _update_request_kwargs(self, **kwargs) -> Dict:
-        kwargs['headers'] = kwargs.get('headers', {}) | self.headers
+        if self.headers:
+            kwargs['headers'] = kwargs.get('headers', {}) | self.headers
         kwargs['timeout'] = self.timeout
         kwargs['proxies'] = self.proxies
         return kwargs
