@@ -7,6 +7,7 @@ class MaxRetriesReachedError(Exception):
 
 
 def apply(*nargs):
+    "NOTE: deprecated, use functools.partial instead"
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
