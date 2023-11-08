@@ -1,5 +1,6 @@
 import functools
 import time
+import warnings
 
 
 class MaxRetriesReachedError(Exception):
@@ -8,6 +9,7 @@ class MaxRetriesReachedError(Exception):
 
 def apply(*nargs):
     "NOTE: deprecated, use functools.partial instead"
+    warnings.warn('use functools.partial instead', DeprecationWarning, stacklevel=2)
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
