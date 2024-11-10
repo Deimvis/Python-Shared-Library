@@ -22,18 +22,22 @@ class FunctionSignature:
 
     @property
     def args(self) -> List[str]:
+        """ returns list of pos arguments' names """
         return self._pos_args
 
     @property
     def kwargs(self) -> Dict[str, Any]:
+        """ returns mapping {arg_name -> default_value} for keyword arguments """
         return self._kwargs
 
     @property
     def pos_args(self) -> List[str]:
+        """ returns list of pos arguments' names (the same as args) """
         return self._pos_args
 
     @property
     def all_args(self) -> List[str]:
+        """ returns list of all arguments' names """
         return self._all_args
 
     @property
@@ -53,7 +57,7 @@ class FunctionSignature:
         return arguments_map
 
     def __str__(self):
-        kwargs_formatted = ['{}={}'.format(key, value) for key, value in self.kwargs.iteritems()]
+        kwargs_formatted = ['{}={}'.format(key, value) for key, value in self.kwargs.items()]
         return '{}({})'.format(self.func_name, ', '.join(self.args + kwargs_formatted))
 
 

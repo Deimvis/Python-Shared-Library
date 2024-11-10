@@ -24,10 +24,10 @@ class SimpleEnum:
     def names(cls) -> List[str]:
         """ Return set of field names """
         class_attrs = inspect_class_attrs(cls)
-        return [attr[0] for attr in class_attrs]
+        return [attr[0] for attr in sorted(class_attrs, key=lambda attr: attr[0])]
 
     @classmethod
     def values(cls) -> List[Any]:
         """ Return set of field values """
         class_attrs = inspect_class_attrs(cls)
-        return [attr[1] for attr in class_attrs]
+        return [attr[1] for attr in sorted(class_attrs, key=lambda attr: attr[0])]
